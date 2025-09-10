@@ -142,7 +142,8 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // Estatísticas gerais
 $stmt = $pdo->query("
     SELECT 
-        COUNT(*) as total_usuarios,
+               saldo_comissao, conta_demo, comissao,
+               attributed_affiliate_id, ref_code_attributed, first_deposit_confirmed
         COUNT(CASE WHEN conta_demo = 0 THEN 1 END) as usuarios_ativos,
         COUNT(CASE WHEN conta_demo = 1 THEN 1 END) as contas_demo,
         SUM(saldo) as saldo_total,
