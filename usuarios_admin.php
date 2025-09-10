@@ -1719,8 +1719,13 @@ $novos_hoje = $stmt->fetchColumn();
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeDeleteModal();
-                closeSaldoModal();
-                document.getElementById('userDropdown').classList.remove('show');
+                    try {
+                        $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'desativacao', 'Status de afiliado removido pelo admin')");
+                        $stmt->execute([$user_id]);
+                    } catch (PDOException $e) {
+                        // Tabela historico_afiliados pode não existir ainda
+                        error_log("Aviso: Tabela historico_afiliados não existe: " . $e->getMessage());
+                    }
             }
         });
 
@@ -1735,9 +1740,51 @@ $novos_hoje = $stmt->fetchColumn();
                 const row = checkbox.closest('tr');
                 const percentualInput = row.querySelector('input[name="percentual_ganho"]');
                 
-                checkbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        percentualInput.value = '';
+                        $tables = [
+                            'rollover' => ['usuario_id'],
+                            'historico_jogos' => ['usuario_id'], 
+                            'saques' => ['usuario_id'],
+                            'transacoes_pix' => ['usuario_id'],
+                            'comissoes' => ['usuario_indicado_id', 'afiliado_id'],
+                            'historico_afiliados' => ['afiliado_id'],
+                            'affiliate_clicks' => ['affiliate_id', 'usuario_convertido_id'],
+                            'affiliate_attributions' => ['user_id', 'affiliate_id'],
+                            'payment_callbacks' => ['user_id']
+                        ];
+                        
+                        foreach ($tables as $table => $possible_columns) {
+                            $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'ativacao', ?)");
+                                // Verificar se a tabela existe
+                                $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+                                $stmt->execute([$table]);
+                                $table_exists = $stmt->fetchColumn() > 0;
+                                
+                                if ($table_exists) {
+                                    // Verificar quais colunas existem
+                                    $stmt = $pdo->prepare("SHOW COLUMNS FROM `$table`");
+                                    $stmt->execute();
+                                    $existing_columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                                    
+                                    $delete_conditions = [];
+                                    $delete_params = [];
+                                    
+                                    foreach ($possible_columns as $column) {
+                                        if (in_array($column, $existing_columns)) {
+                                            $delete_conditions[] = "`$column` = ?";
+                                            $delete_params[] = $user_id;
+                                        }
+                                    }
+                                    
+                                    if (!empty($delete_conditions)) {
+                                        $delete_sql = "DELETE FROM `$table` WHERE " . implode(' OR ', $delete_conditions);
+                                        $stmt = $pdo->prepare($delete_sql);
+                                        $stmt->execute($delete_params);
+                                    }
+                                }
+                            // Tabela historico_afiliados pode não existir ainda
+                                // Log do erro mas continua o processo
+                                error_log("Erro ao excluir de $table: " . $e->getMessage());
+                        }
                         percentualInput.disabled = true;
                         percentualInput.style.opacity = '0.5';
                     } else {
