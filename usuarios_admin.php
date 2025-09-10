@@ -1745,10 +1745,39 @@ $novos_hoje = $stmt->fetchColumn();
                         percentualInput.style.opacity = '1';
                         percentualInput.focus();
                     }
-                });
-                
+                                // Verificar se a tabela existe antes de tentar deletar
+                                $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+                                $stmt->execute([$table]);
+                                $table_exists = $stmt->fetchColumn() > 0;
+                                
+                                if ($table_exists) {
+                                    // Verificar quais colunas existem na tabela
+                                    $stmt = $pdo->prepare("SHOW COLUMNS FROM `$table`");
+                                    $stmt->execute();
+                                    $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                                    
+                                    $delete_conditions = [];
+                                    $delete_params = [];
+                                    
+                                    if (in_array('usuario_id', $columns)) {
+                                        $delete_conditions[] = 'usuario_id = ?';
+                                        $delete_params[] = $user_id;
+                                    }
+                                    
+                                    if (in_array('afiliado_id', $columns)) {
+                                        $delete_conditions[] = 'afiliado_id = ?';
+                                        $delete_params[] = $user_id;
+                                    }
+                                    
+                                    if (!empty($delete_conditions)) {
+                                        $delete_sql = "DELETE FROM `$table` WHERE " . implode(' OR ', $delete_conditions);
+                                        $stmt = $pdo->prepare($delete_sql);
+                                        $stmt->execute($delete_params);
+                                    }
+                                }
                 // Aplicar estado inicial
-                if (checkbox.checked) {
+                                // Log do erro mas continua o processo
+                                error_log("Erro ao excluir de $table: " . $e->getMessage());
                     percentualInput.disabled = true;
                     percentualInput.style.opacity = '0.5';
                 }
