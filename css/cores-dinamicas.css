@@ -1,0 +1,237 @@
+/* Cores personalizadas - Gerado automaticamente em 2025-09-06 10:34:12 */
+:root {
+    --primary-gold: #89fa00;
+    --secondary-gold: #000000;
+    --primary-blue: #000000;
+    --primary-green: #00e880;
+    --bg-dark: #000000;
+    --bg-panel: #111318;
+    --primary-gold-rgb: 137, 250, 0;
+    --secondary-gold-rgb: 0, 0, 0;
+    --primary-blue-rgb: 0, 0, 0;
+    --primary-green-rgb: 0, 232, 128;
+}
+
+/* Aplicação das cores personalizadas */
+.btn-primary, 
+.btn-depositar, 
+.saldo, 
+.generate-btn,
+.btn-jogar,
+.btn-copiar,
+.quick-amount:hover,
+.btn-continuar,
+.login-button,
+.btn-full,
+.step-number,
+.package-price,
+.hot-badge {
+    background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold)) !important;
+    color: #000 !important;
+}
+
+.footer a.active, 
+.tab.active, 
+i.active,
+.bottom-nav a.active,
+.bottom-nav a:hover,
+.how-it-works h2 {
+    color: var(--primary-blue) !important;
+}
+
+.footer a.deposito-btn,
+.footer a.deposit-btn,
+.bottom-nav .deposit-btn {
+    background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold)) !important;
+    color: #000 !important;
+}
+
+/* Elementos específicos que precisam da cor primária */
+.winner-card::before,
+.package-card::before,
+.card::before,
+.step-card::before {
+    background: linear-gradient(90deg, transparent, var(--primary-gold), transparent) !important;
+}
+
+.winner-product-image,
+.premio-item img {
+    border-color: var(--primary-gold) !important;
+}
+
+.package-price {
+    color: var(--primary-gold) !important;
+    border-color: var(--primary-gold) !important;
+}
+
+/* Sombras e efeitos com RGB */
+.btn-primary:hover,
+.btn-depositar:hover,
+.generate-btn:hover,
+.btn-jogar:hover,
+.login-button:hover,
+.step-number:hover {
+    box-shadow: 0 6px 20px rgba(var(--primary-gold-rgb), 0.4) !important;
+}
+
+.bottom-nav .deposit-btn:hover {
+    box-shadow: 0 4px 12px rgba(var(--primary-gold-rgb), 0.4) !important;
+}
+
+/* Bordas e contornos */
+.reel-wrapper::before,
+.modal-content::before,
+.login-container::before {
+    background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold), var(--primary-gold)) !important;
+}
+
+/* Animações e efeitos especiais */
+.winner-card:hover,
+.package-card:hover {
+    border-color: var(--primary-gold) !important;
+    box-shadow: 0 4px 16px rgba(var(--primary-gold-rgb), 0.2) !important;
+}
+
+.btn-verde, 
+.status-aprovado,
+.btn-success {
+    background: var(--primary-green) !important;
+    color: #000 !important;
+}
+
+body {
+    background: var(--bg-dark) !important;
+}
+
+.header, 
+.card, 
+.container,
+.deposit-form,
+.history-section,
+.winners-section,
+.packages-section .package-card,
+.how-it-works,
+.game-container,
+.modal-content,
+.login-container {
+    background: var(--bg-panel) !important;
+}
+
+.text-primary,
+.title,
+.welcome-title,
+.stat-value,
+.transaction-value,
+.winner-prize,
+.package-price,
+.step-number,
+.modal-content h2,
+.form-title h1,
+.section-header h2,
+.winners-header h2,
+.valor-label,
+.codigo-afiliado,
+.highlight,
+.highlight2 {
+    color: var(--primary-gold) !important;
+}
+
+.border-primary,
+.package-card::before,
+.card::before {
+    border-color: var(--primary-gold) !important;
+}
+
+/* Inputs e formulários */
+.form-input:focus,
+.input-group input:focus,
+.search-input:focus,
+.select-input:focus,
+.input-box:focus,
+.color-text:focus,
+.affiliate-link input:focus {
+    border-color: var(--primary-gold) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-gold-rgb), 0.1) !important;
+}
+
+/* Status e badges */
+.status-pendente {
+    color: var(--primary-gold) !important;
+    background: rgba(var(--primary-gold-rgb), 0.15) !important;
+}
+
+/* Efeitos hover */
+.card:hover,
+.stat-card:hover,
+.package-card:hover,
+.winner-card:hover,
+.transaction-item:hover {
+    border-color: var(--primary-gold) !important;
+    box-shadow: 0 8px 24px rgba(var(--primary-gold-rgb), 0.1) !important;
+}
+
+/* Elementos específicos do jogo */
+.reel-item-text,
+.premio-item-text {
+    color: var(--primary-gold) !important;
+}
+
+/* Navegação e tabs */
+.nav-item.active,
+.logo,
+.tab.active::after {
+    color: var(--primary-gold) !important;
+    background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold)) !important;
+}
+
+/* Modais e overlays */
+.modal-prize-container img {
+    border-color: var(--primary-gold) !important;
+}
+
+/* Efeitos de animação */
+.gate-arrow {
+    filter: drop-shadow(0 0 6px var(--primary-gold)) drop-shadow(0 0 14px var(--primary-gold)) !important;
+}
+
+/* Quick amounts e botões especiais */
+.quick-amount:hover,
+.quick-amounts button:hover {
+    border-color: var(--primary-gold) !important;
+    background: rgba(var(--primary-gold-rgb), 0.1) !important;
+    color: var(--primary-gold) !important;
+}
+
+/* Elementos específicos */
+.highlight,
+.highlight2 {
+    color: var(--primary-gold) !important;
+}
+
+.valor-label,
+.codigo-afiliado {
+    color: var(--primary-gold) !important;
+    background: rgba(var(--primary-gold-rgb), 0.15) !important;
+}
+
+/* Navegação */
+.nav-item.active,
+.logo {
+    color: var(--primary-gold) !important;
+}
+
+/* Modais e overlays */
+.modal-overlay {
+    backdrop-filter: blur(8px);
+}
+
+/* Animações e efeitos */
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.card::before,
+.package-card::before {
+    background: linear-gradient(90deg, transparent, var(--primary-gold), transparent) !important;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste AJAX</title>
+</head>
+<body>
+    <h1>Teste AJAX</h1>
+    <button onclick="testarAjax()">Testar AJAX</button>
+    <div id="resultado"></div>
+
+    <script>
+    function testarAjax() {
+        const resultado = document.getElementById('resultado');
+        resultado.textContent = 'Testando...';
+        
+        fetch('teste_ajax.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'teste=1'
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log('Resposta:', data);
+            console.log('Tamanho:', data.length);
+            console.log('Inclui sucesso:', data.includes('sucesso'));
+            console.log('Trim inclui sucesso:', data.trim().includes('sucesso'));
+            
+            if (data.trim().includes('sucesso')) {
+                resultado.textContent = 'SUCESSO! Resposta: ' + data;
+                resultado.style.color = 'green';
+            } else {
+                resultado.textContent = 'ERRO! Resposta: ' + data;
+                resultado.style.color = 'red';
+            }
+        })
+        .catch(error => {
+            resultado.textContent = 'Erro: ' + error;
+            resultado.style.color = 'red';
+        });
+    }
+    </script>
+</body>
+</html>

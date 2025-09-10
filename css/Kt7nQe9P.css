@@ -1,0 +1,57 @@
+.generate-btn,body{font-family:Poppins,sans-serif}#valor,.footer a,.subtitle,.tab,.title{text-align:center}body{margin:0;background-color:#0e1015;color:#fff}.container{max-width:400px;margin:0px;padding:20px}.title{font-size:20px;font-weight:700;margin-bottom:10px}.subtitle{font-size:14px;color:#aaa;margin-bottom:20px}.input-box,.quick-buttons button{color:#fff;padding:10px;font-size:16px}.input-box{background:#151515;border:1px solid #333;border-radius:8px;width:100%;margin-bottom:10px}.generate-btn,.generate-btn:hover{background-color:#007fdb}.quick-buttons{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}.quick-buttons button{flex:1 1 30%;background-color:#151515;border:1px solid #333;border-radius:8px;cursor:pointer;transition:.2s}.quick-buttons button:hover{background-color:#007fdb}.generate-btn{color:#121419;border:none;padding:15px;font-size:16px;border-radius:10px;width:100%;cursor:pointer;font-weight:700}.tab{color:#007fdb}.back{font-size:20px;cursor:pointer;margin-bottom:10px;display:inline-block}.tab{font-size:14px;border-bottom:2px solid #007fdb;padding-bottom:5px;margin-bottom:15px}#valor{max-width:300px;margin:0 auto 10px;display:block}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #000000de;
+  display: flex;
+  justify-content: space-around;
+  padding: 9px 0;
+  border-top: 1px solid #222;
+  z-index: 10;
+}
+
+.footer a {
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  color: #aaa;
+}
+
+
+
+.footer a.active {
+  color: #007fdb;
+}
+
+/* 🔹 Destaque do botão Depositar */
+.footer a.deposito-btn {
+  position: relative;
+  margin-top: -20px; /* faz ele "subir" acima do footer */
+  background: #007fdb; /* cor do círculo */
+  color: #fff !important;
+  border-radius: 50%;
+  width: 60px;  /* tamanho do círculo */
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  font-size: 13px;
+  flex-direction: column;
+  gap: 2px;
+  transition: 0.3s;
+}
+
+.footer a.deposito-btn i {
+  font-size: 20px; /* tamanho do ícone dentro */
+}
+
+.footer a.deposito-btn:hover {
+  background: #0095ff; /* cor ao passar mouse */
+  transform: scale(1.05);
+}

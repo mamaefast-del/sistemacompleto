@@ -1,0 +1,476 @@
+/* --- Estilos Gerais (Mantidos para consistência) --- */
+body {
+    background: #0e1015;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    padding-bottom: 80px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+
+
+
+* {
+    box-sizing: border-box;
+}
+
+header {
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+}
+
+.saldo-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 8px;
+    background: #121419;
+    width: 90%;
+    max-width: 400px;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+}
+
+/* --- Estilos da Roleta Horizontal (Reel) --- */
+/* --- Estilos da Roleta Horizontal (Reel) --- */
+.reel-wrapper {
+    position: relative;
+    width: 95%;
+    max-width: 600px;
+    height: 200px;
+    background: transparent;
+    margin: 20px auto;
+    overflow: hidden;
+}
+
+.reel-pointer {
+    position: absolute;
+    bottom: 0; /* se quiser fixar embaixo */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 14px solid #ffb400;
+    z-index: 10;
+}
+
+.modal-prize-container:has(img:not([src])) {
+  display: none;
+}
+
+.pointer-down {
+    position: absolute;
+    top: 0; /* se quiser fixar embaixo */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 14px solid #ffb400; /* seta amarela para cima */
+    z-index: 10;
+}
+
+.reel-strip {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* --- CARD DO ITEM --- */
+.reel-item {
+    min-width: 160px;
+    height: 180px;
+    background: linear-gradient(180deg, #000a15, #2a003d);
+    border-radius: 12px;
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    transition: transform 0.2s ease-in-out;
+}
+
+.reel-item:hover {
+    transform: scale(1.08);
+    z-index: 5;
+}
+
+/* --- Imagem da nota --- */
+.reel-item img {
+    max-width: 100%;
+    max-height: 90px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* --- Texto do prêmio principal (ex: "500 Reais") --- */
+.reel-item .reel-item-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* --- Texto do valor (ex: "R$ 500,00") --- */
+.reel-item .valor {
+    background: linear-gradient(180deg, #430b77, #32025d);
+    color: #be77ff;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-align: center;
+    width: 100%;
+    margin-top: auto;
+}
+
+/* Item "Não Ganhou" */
+.reel-item.item-nao-ganhou-bg {
+    background: linear-gradient(180deg, #5c0000, #250000);
+    color: #fff;
+}
+.reel-item.item-nao-ganhou-bg .item-nao-ganhou {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+/* --- Botões e Mensagens (Mantidos) --- */
+.btn-jogar {
+    background: #007fdb;
+    color: #0e1015;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0px;
+    transition: background-color 0.3s, opacity 0.5s;
+}
+
+.btn-jogar:hover {
+    background: #007fdb;
+}
+
+.btn-jogar:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.mensagem {
+    margin-top: 20px;
+    min-height: 30px;
+    font-size: 1.2em;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.mensagem.erro {
+    background-color: #d32f2f;
+    color: white;
+}
+
+/* ============================================= */
+/* CSS para a Lista de Prêmios Disponíveis       */
+/* ============================================= */
+
+.premios-disponiveis-container {
+    max-width: 500px;
+    margin: 40px auto 20px auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.premios-disponiveis-container h3 {
+    color: #007fdb;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.premios-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Cria duas colunas de tamanho igual */
+    gap: 15px; /* Espaçamento entre os itens */
+}
+
+.premio-item {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.premio-item img {
+    max-height: 50px; /* Ajuste o tamanho da imagem se necessário */
+    width: auto;
+    margin-bottom: 10px;
+}
+
+.premio-item-text {
+    color: #007fdb;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+/* ========== ESTILOS DO MODAL DE RESULTADO ========== */
+
+/* O fundo escurecido que cobre a tela */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Classe para mostrar o modal */
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* O conteúdo principal do modal (a caixa branca) */
+.modal-content {
+    background: linear-gradient(145deg, #000a15, #3100a7);
+    color: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    width: 90%;
+    max-width: 380px;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    border: 2px solid #007fdb;
+}
+
+.modal-overlay.show .modal-content {
+    transform: scale(1);
+}
+
+/* Título do modal (Ex: "Parabéns!") */
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff; /* Cor de destaque para o título */
+}
+
+/* Container da imagem do prêmio */
+.modal-prize-container {
+  display: flex;
+  justify-content: center;   /* Centraliza horizontalmente */
+  align-items: center;       /* Centraliza verticalmente */
+  margin: 20px 0;
+  text-align: center;        /* Só funciona em elementos inline/texto */
+}
+
+.modal-prize-container img {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 8px;
+  margin: 0 auto;            /* Centraliza caso seja block */
+  display: block;            /* Garante que margin auto funcione */
+}
+
+
+/* Texto do prêmio (Ex: "Você ganhou R$ 50,00") */
+.modal-content p {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+/* Botão "Continuar" */
+.btn-continuar {
+    display: inline-block;
+    width: 100%;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #000a15;
+    background: #ffbe00;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+}
+
+.btn-continuar:hover {
+    background-color: #f39c12;
+    transform: translateY(-2px);
+}
+
+/* Adicione um preenchimento na parte inferior do corpo da página
+   para que o conteúdo não fique escondido atrás do rodapé fixo.
+   Ajuste o valor (80px) se a altura do seu rodapé for diferente. */
+body {
+    margin: 0;
+    padding-bottom: 80px; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- Estilo Principal do Rodapé --- */
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #000000de;
+  display: flex;
+  justify-content: space-around;
+  padding: 9px 0;
+  border-top: 1px solid #222;
+  z-index: 10;
+}
+
+.footer a {
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  color: #aaa;
+}
+
+
+
+.footer a.active {
+  color: #007fdb;
+}
+
+/* 🔹 Destaque do botão Depositar */
+.footer a.deposito-btn {
+  position: relative;
+  margin-top: -20px; /* faz ele "subir" acima do footer */
+  background: #007fdb; /* cor do círculo */
+  color: #fff !important;
+  border-radius: 50%;
+  width: 60px;  /* tamanho do círculo */
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  font-size: 13px;
+  flex-direction: column;
+  gap: 2px;
+  transition: 0.3s;
+}
+
+.footer a.deposito-btn i {
+  font-size: 20px; /* tamanho do ícone dentro */
+}
+
+.footer a.deposito-btn:hover {
+  background: #0095ff; /* cor ao passar mouse */
+  transform: scale(1.05);
+}
+
+
+/* ============================================= */
+/* HEADER DE USUÁRIO (LOGO + SALDO)              */
+/* ============================================= */
+
+.user-header {
+    display: flex; /* Habilita o layout flexível */
+    justify-content: space-between; /* Alinha a logo à esquerda e o saldo à direita */
+    align-items: center; /* Centraliza os itens verticalmente */
+    
+    width: 90%;
+    max-width: 500px; /* Mantém a consistência com o resto do layout */
+    
+    background-color: #000a15; /* Preto/Cinza escuro para o fundo */
+    padding: 10px 20px;
+    margin: 20px 0; /* Espaçamento acima e abaixo */
+    
+    border-radius: 15px; /* Bordas arredondadas */
+    border: 2px solid #007fdb; /* Borda amarela para destaque */
+    box-shadow: 0 4px 15px rgba(253, 216, 53, 0.1); /* Sombra amarela sutil */
+    box-sizing: border-box;
+}
+
+/* --- Lado da Logo --- */
+.user-header-logo img {
+    height: 40px; /* Altura da logo, como no seu código original */
+    width: auto;
+    display: block; /* Remove espaços extras indesejados */
+}
+
+/* --- Lado do Saldo --- */
+.user-header-saldo {
+    display: flex;
+    flex-direction: column; /* Organiza o texto em coluna */
+    align-items: flex-end; /* Alinha o texto à direita */
+}
+
+/* Estilo para o texto "Seu Saldo" */
+.saldo-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ffffff; /* Um cinza claro para não competir com o valor */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Estilo para o valor do saldo (R$ XX,XX) */
+.saldo-valor {
+    font-size: 20px;
+    font-weight: 700; /* Negrito */
+    color: #007fdb; /* Amarelo, cor de destaque principal */
+    line-height: 1.2;
+}

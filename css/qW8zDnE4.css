@@ -1,0 +1,57 @@
+.header,body{background:#0e1015}.header,.painel div{justify-content:space-between}.painel a.painel-item{display:flex;text-decoration:none}body{margin:0;color:#fff;font-family:Poppins,sans-serif}.header{padding:10px 15px;display:flex;align-items:center}.logo{font-family:Orbitron,sans-serif;font-size:18px;color:#0ff}.saldo-topo{background:#13151b;padding:5px 10px;border-radius:20px;font-size:17px;margin-right:5px}.btn-depositar-topo{background:#00e880;color:#0e1015;border:none;border-radius:20px;padding:5px 10px;font-size:15px;cursor:pointer;font-family:Poppins,sans-serif;font-weight:700}.perfil-box{padding:15px}.perfil-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}.perfil-header img{width:40px;height:40px;border-radius:50%;object-fit:cover}.perfil-info{font-size:14px}.saldo-section{background:#121419;border-radius:10px;padding:15px;margin-bottom:15px}.saldo-title{margin-bottom:10px}.btn-duplo{display:flex;gap:10px}.btn-duplo button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}.btn-verde{background:#00e880;color:#0e1015}.btn-laranja{background:#f60;color:#0e1015}.indicacao,.painel{background:#121419;padding:10px;border-radius:10px}.painel{margin-bottom:15px}.painel div{padding:10px;border-bottom:1px solid #333;display:flex;align-items:center}.painel div:last-child{border-bottom:none}.indicacao{text-align:center;margin-bottom:100px}.link-box{background:#0e1015;padding:8px;border-radius:8px;color:#fff;display:flex;justify-content:space-between;margin-top:8px}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #000000de;
+  display: flex;
+  justify-content: space-around;
+  padding: 9px 0;
+  border-top: 1px solid #222;
+  z-index: 10;
+}
+
+.footer a {
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  color: #aaa;
+}
+
+
+
+.footer a.active {
+  color: #007fdb;
+}
+
+/* 🔹 Destaque do botão Depositar */
+.footer a.deposito-btn {
+  position: relative;
+  margin-top: -20px; /* faz ele "subir" acima do footer */
+  background: #007fdb; /* cor do círculo */
+  color: #fff !important;
+  border-radius: 50%;
+  width: 60px;  /* tamanho do círculo */
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  font-size: 13px;
+  flex-direction: column;
+  gap: 2px;
+  transition: 0.3s;
+}
+
+.footer a.deposito-btn i {
+  font-size: 20px; /* tamanho do ícone dentro */
+}
+
+.footer a.deposito-btn:hover {
+  background: #0095ff; /* cor ao passar mouse */
+  transform: scale(1.05);
+}{.cta-bloco h3,.logo{font-size:16px}.btn-depositar,.saldo{font-size:15px}.btn-depositar{padding:5px 10px}.cta-bloco p,.ganhador,.rodape-info h4{font-size:13px}.btn-jogar{font-size:14px;padding:10px 95px}.rodape-info{font-size:12px}}.painel a.painel-item{justify-content:space-between;align-items:center;background-color:#121419;color:#fff;padding:14px 18px;border-radius:10px;margin-top:8px;font-size:15px;transition:background-color .2s}.painel a.painel-item:hover{background-color:#2a2a2a}

@@ -1,0 +1,42 @@
+/* Cores personalizadas geradas automaticamente */
+:root {
+    --primary-gold: #89fa00;
+    --secondary-gold: #000000;
+    --primary-blue: #000000;
+    --primary-green: #00e880;
+    --bg-dark: #000000;
+    --bg-panel: #111318;
+}
+
+/* Aplicar cores personalizadas */
+.btn-primary, .btn-depositar, .saldo, .generate-btn {
+    background: linear-gradient(135deg, #89fa00, #000000) !important;
+}
+
+.footer a.active, .tab.active, i.active {
+    color: #000000 !important;
+}
+
+.footer a.deposito-btn {
+    background: #000000 !important;
+}
+
+.btn-verde, .status-aprovado {
+    background: #00e880 !important;
+}
+
+body {
+    background: #000000 !important;
+}
+
+.header, .card, .container {
+    background: #111318 !important;
+}
+
+.text-primary {
+    color: #89fa00 !important;
+}
+
+.border-primary {
+    border-color: #89fa00 !important;
+}
