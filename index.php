@@ -1,10 +1,13 @@
 <?php
 // Incluir rastreamento de afiliados
-require_once 'includes/affiliate_header.php';
-
-$duracao = 60 * 60 * 24 * 30;
+// Configurar sessão ANTES de iniciar
+$duracao = 60 * 60 * 24 * 30; // 30 dias
 session_set_cookie_params(['lifetime'=>$duracao,'path'=>'/','secure'=>false,'httponly'=>true,'samesite'=>'Lax']);
 ini_set('session.gc_maxlifetime',$duracao);
+
+// Agora incluir o header que pode iniciar a sessão
+require_once 'includes/affiliate_header.php';
+
 session_start();
 require 'db.php';
 $usuarioLogado=false;$usuario=null;
