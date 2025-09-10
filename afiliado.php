@@ -109,54 +109,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_withdrawal'])
 // Buscar estatísticas do afiliado
 if ($is_affiliate) {
     try {
-        // Indicados diretos
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE codigo_afiliado_usado = ?");
-        $stmt->execute([$usuario['codigo_afiliado']]);
+        // Indicados diretos - usar nova estrutura
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM usuarios 
+            WHERE codigo_afiliado_usado = ? OR attributed_affiliate_id = ?
+        ");
+        $stmt->execute([$usuario['codigo_afiliado'], $usuario_id]);
         $total_indicados = $stmt->fetchColumn();
         
-        // Volume gerado pelos indicados
+        // Volume gerado pelos indicados - usar nova estrutura
         $stmt = $pdo->prepare("
             SELECT COALESCE(SUM(t.valor), 0) 
             FROM transacoes_pix t 
-            JOIN usuarios u ON t.usuario_id = u.id 
-            WHERE u.codigo_afiliado_usado = ? AND t.status = 'aprovado'
+            WHERE (t.affiliate_id = ? OR EXISTS (
+                SELECT 1 FROM usuarios u 
+                WHERE u.id = t.usuario_id 
+                AND (u.codigo_afiliado_usado = ? OR u.attributed_affiliate_id = ?)
+            )) AND t.status = 'aprovado'
         ");
-        $stmt->execute([$usuario['codigo_afiliado']]);
+        $stmt->execute([$usuario_id, $usuario['codigo_afiliado'], $usuario_id]);
         $volume_gerado = $stmt->fetchColumn();
         
-        // Comissões totais geradas
+        // Comissões totais geradas - usar tabela comissoes
         $stmt = $pdo->prepare("SELECT COALESCE(SUM(valor_comissao), 0) FROM comissoes WHERE afiliado_id = ?");
-        $stmt->execute([$usuario_id]);
+        $stmt->execute([$usuario['codigo_afiliado']]);
         $comissoes_totais = $stmt->fetchColumn();
         
-        // Cliques no link
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM affiliate_clicks WHERE afiliado_id = ?");
-        $stmt->execute([$usuario_id]);
+        // Cliques no link - usar nova tabela affiliate_clicks
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM affiliate_clicks 
+            WHERE affiliate_id = ? OR ref_code = ?
+        ");
+        $stmt->execute([$usuario_id, $usuario['codigo_afiliado']]);
         $total_clicks = $stmt->fetchColumn();
         
-        // Cliques que converteram (LÓGICA CORRIGIDA)
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM affiliate_clicks WHERE afiliado_id = ? AND converteu = 1");
-        $stmt->execute([$usuario_id]);
+        // Cliques que converteram - usar nova estrutura
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM affiliate_clicks 
+            WHERE (affiliate_id = ? OR ref_code = ?) AND converteu = 1
+        ");
+        $stmt->execute([$usuario_id, $usuario['codigo_afiliado']]);
         $clicks_convertidos = $stmt->fetchColumn();
         
         // Taxa de conversão correta: (cliques convertidos / total cliques) * 100
         $conversao = $total_clicks > 0 ? ($clicks_convertidos / $total_clicks) * 100 : 0;
         
-        // Últimos indicados
+        // Últimos indicados - usar nova estrutura
         $stmt = $pdo->prepare("
             SELECT u.*, 
                    COALESCE(SUM(CASE WHEN t.status = 'aprovado' THEN t.valor ELSE 0 END), 0) as volume_individual
             FROM usuarios u
             LEFT JOIN transacoes_pix t ON t.usuario_id = u.id
-            WHERE u.codigo_afiliado_usado = ?
+            WHERE u.codigo_afiliado_usado = ? OR u.attributed_affiliate_id = ?
             GROUP BY u.id
             ORDER BY u.data_cadastro DESC
             LIMIT 5
         ");
-        $stmt->execute([$usuario['codigo_afiliado']]);
+        $stmt->execute([$usuario['codigo_afiliado'], $usuario_id]);
         $ultimos_indicados = $stmt->fetchAll();
         
-        // Histórico de comissões
+        // Histórico de comissões - usar nova estrutura
         $stmt = $pdo->prepare("
             SELECT c.*, u.nome as indicado_nome, u.email as indicado_email
             FROM comissoes c
@@ -181,6 +193,65 @@ if ($is_affiliate) {
     } catch (PDOException $e) {
         $total_indicados = $volume_gerado = $comissoes_totais = $total_clicks = $clicks_convertidos = $conversao = 0;
         $ultimos_indicados = $historico_comissoes = $historico_saques = [];
+        error_log("Erro ao buscar estatísticas de afiliado: " . $e->getMessage());
+    }
+}
+
+// Função para criar dados de teste se necessário
+if ($is_affiliate && isset($_GET['create_test_data'])) {
+    try {
+        // Criar clique de teste
+        $stmt = $pdo->prepare("
+            INSERT INTO affiliate_clicks (affiliate_id, ref_code, url, utm_source, ip_address, session_id, created_at) 
+            VALUES (?, ?, ?, 'test', '127.0.0.1', 'test_session', NOW())
+        ");
+        $stmt->execute([$usuario_id, $usuario['codigo_afiliado'], '/?ref=' . $usuario['codigo_afiliado']]);
+        
+        // Criar usuário indicado de teste
+        $stmt = $pdo->prepare("
+            INSERT INTO usuarios (nome, email, senha, codigo_afiliado_usado, attributed_affiliate_id, ref_code_attributed, attributed_at, saldo) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 0)
+        ");
+        $test_email = 'indicado_' . time() . '@teste.com';
+        $stmt->execute([
+            'Usuário Indicado Teste',
+            $test_email,
+            password_hash('123456', PASSWORD_DEFAULT),
+            $usuario['codigo_afiliado'],
+            $usuario_id,
+            $usuario['codigo_afiliado']
+        ]);
+        $indicado_id = $pdo->lastInsertId();
+        
+        // Criar atribuição
+        $stmt = $pdo->prepare("
+            INSERT INTO affiliate_attributions (user_id, affiliate_id, ref_code, attribution_model, created_at) 
+            VALUES (?, ?, ?, 'LAST_CLICK', NOW())
+        ");
+        $stmt->execute([$indicado_id, $usuario_id, $usuario['codigo_afiliado']]);
+        
+        // Criar transação de teste
+        $stmt = $pdo->prepare("
+            INSERT INTO transacoes_pix (usuario_id, valor, external_id, transaction_id, status, affiliate_id, ref_code, is_first_deposit, criado_em) 
+            VALUES (?, 100.00, ?, ?, 'aprovado', ?, ?, 1, NOW())
+        ");
+        $external_id = 'TEST_' . time();
+        $transaction_id = 'TXN_' . time();
+        $stmt->execute([$indicado_id, $external_id, $transaction_id, $usuario_id, $usuario['codigo_afiliado']]);
+        
+        // Criar comissão de teste
+        $stmt = $pdo->prepare("
+            INSERT INTO comissoes (afiliado_id, usuario_indicado_id, valor_transacao, valor_comissao, porcentagem_aplicada, nivel, tipo, status, transaction_id, ref_code, is_first_deposit) 
+            VALUES (?, ?, 100.00, 10.00, 10.00, 1, 'deposito', 'pendente', ?, ?, 1)
+        ");
+        $stmt->execute([$usuario_id, $indicado_id, $transaction_id, $usuario['codigo_afiliado']]);
+        
+        $_SESSION['success'] = 'Dados de teste criados com sucesso!';
+        header('Location: afiliado.php');
+        exit;
+        
+    } catch (PDOException $e) {
+        $_SESSION['error'] = 'Erro ao criar dados de teste: ' . $e->getMessage();
     }
 }
 
@@ -1072,6 +1143,15 @@ body {
       </h1>
       <p>Código: <span class="highlight"><?= $usuario['codigo_afiliado'] ?></span> • Comissão: <span class="highlight"><?= number_format($usuario['porcentagem_afiliado'], 1) ?>%</span></p>
       <p>Acompanhe sua performance e maximize seus ganhos!</p>
+      
+      <?php if ($total_indicados == 0 && $total_clicks == 0): ?>
+        <div style="margin-top: 16px;">
+          <a href="?create_test_data=1" class="btn btn-secondary" style="font-size: 12px; padding: 8px 16px;">
+            <i class="fas fa-flask"></i>
+            Criar Dados de Teste
+          </a>
+        </div>
+      <?php endif; ?>
     </div>
 
     <!-- Estatísticas -->
