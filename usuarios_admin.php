@@ -39,10 +39,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tabelas = ['historico_jogos', 'transacoes_pix', 'saques', 'rollover'];
                 foreach ($tabelas as $tabela) {
                     try {
-                        $stmt = $pdo->prepare("DELETE FROM $tabela WHERE usuario_id = ?");
-                        $stmt->execute([$usuario_id]);
+                        // Verificar se a tabela existe antes de tentar deletar
+                        $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+                        $stmt->execute([$tabela]);
+                        if ($stmt->fetch()) {
+                            // Verificar quais colunas existem na tabela
+                            $stmt = $pdo->prepare("DESCRIBE $tabela");
+                            $stmt->execute();
+                            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            
+                            $whereConditions = [];
+                            $params = [];
+                            
+                            if (in_array('usuario_id', $columns)) {
+                                $whereConditions[] = 'usuario_id = ?';
+                                $params[] = $usuario_id;
+                            }
+                            if (in_array('afiliado_id', $columns)) {
+                                $whereConditions[] = 'afiliado_id = ?';
+                                $params[] = $usuario_id;
+                            }
+                            
+                            if (!empty($whereConditions)) {
+                                $whereClause = implode(' OR ', $whereConditions);
+                                $stmt = $pdo->prepare("DELETE FROM $tabela WHERE $whereClause");
+                                $stmt->execute($params);
+                            }
+                        }
                     } catch (PDOException $e) {
-                        // Tabela pode não existir, continuar
+                        // Tabela pode não existir ou coluna pode não existir
+                        error_log("Erro ao excluir de $tabela: " . $e->getMessage());
                     }
                 }
                 
