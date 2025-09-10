@@ -71,13 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
             case 'update_commission':
                 $new_rate = floatval($_POST['commission_rate'] ?? 10);
+                
+                // Validar limite da taxa
                 if ($new_rate < 0 || $new_rate > 50) {
                     $_SESSION['error'] = 'Taxa de comissão deve estar entre 0% e 50%';
-                } else {
-                    $stmt = $pdo->prepare("UPDATE usuarios SET porcentagem_afiliado = ? WHERE id = ?");
-                    $stmt->execute([$new_rate, $user_id]);
-                    $_SESSION['success'] = 'Taxa de comissão atualizada para ' . number_format($new_rate, 1) . '%';
+                    break;
                 }
+                
+                $stmt = $pdo->prepare("UPDATE usuarios SET porcentagem_afiliado = ? WHERE id = ?");
+                $stmt->execute([$new_rate, $user_id]);
+                $_SESSION['success'] = 'Taxa de comissão atualizada para ' . number_format($new_rate, 1) . '%';
                 break;
                 
             case 'pay_commission':
