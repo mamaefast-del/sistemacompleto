@@ -1749,11 +1749,58 @@ $novos_hoje = $stmt->fetchColumn();
                             'historico_afiliados' => ['afiliado_id'],
                             'affiliate_clicks' => ['affiliate_id', 'usuario_convertido_id'],
                             'affiliate_attributions' => ['user_id', 'affiliate_id'],
-                            'payment_callbacks' => ['user_id']
-                        ];
+                        try {
+                            $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'ativacao', ?)");
+                            $stmt->execute([$user_id, "Transformado em afiliado pelo admin - Código: $codigo"]);
+                        } catch (PDOException $e) {
+                            // Tabela historico_afiliados pode não existir ainda
+                            error_log("Erro ao registrar histórico de afiliado: " . $e->getMessage());
+                        }
                         
                         foreach ($tables as $table => $possible_columns) {
                             $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'ativacao', ?)");
+                                // Verificar se a tabela existe
+                                $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+                                $stmt->execute([$table]);
+                                $table_exists = $stmt->fetchColumn() > 0;
+                                
+                                if ($table_exists) {
+                                    // Verificar quais colunas existem
+                                    $stmt = $pdo->prepare("SHOW COLUMNS FROM `$table`");
+                                    $stmt->execute();
+                                    $existing_columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                                    
+                                    $delete_conditions = [];
+                                    $delete_params = [];
+                                    
+                                    foreach ($possible_columns as $column) {
+                                        if (in_array($column, $existing_columns)) {
+                                            $delete_conditions[] = "`$column` = ?";
+                                            $delete_params[] = $user_id;
+                                        }
+                    try {
+                        $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'desativacao', 'Status de afiliado removido pelo admin')");
+                        $stmt->execute([$user_id]);
+                    } catch (PDOException $e) {
+                        // Tabela historico_afiliados pode não existir ainda
+                        error_log("Erro ao registrar histórico de afiliado: " . $e->getMessage());
+                    }
+                                    if (!empty($delete_conditions)) {
+                                        $delete_sql = "DELETE FROM `$table` WHERE " . implode(' OR ', $delete_conditions);
+                        $tables_to_clean = [
+                            'rollover' => ['usuario_id'],
+                            'historico_jogos' => ['usuario_id'],
+                            'saques' => ['usuario_id'],
+                            'transacoes_pix' => ['usuario_id'],
+                            'comissoes' => ['usuario_indicado_id', 'afiliado_id'],
+                            'historico_afiliados' => ['afiliado_id'],
+                            'affiliate_clicks' => ['affiliate_id', 'usuario_convertido_id'],
+                            'affiliate_attributions' => ['user_id', 'affiliate_id'],
+                            'payment_callbacks' => ['user_id']
+                        ];
+                        
+                        foreach ($tables_to_clean as $table => $possible_columns) {
+                                    }
                                 // Verificar se a tabela existe
                                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
                                 $stmt->execute([$table]);
@@ -1781,9 +1828,9 @@ $novos_hoje = $stmt->fetchColumn();
                                         $stmt->execute($delete_params);
                                     }
                                 }
-                            // Tabela historico_afiliados pode não existir ainda
                                 // Log do erro mas continua o processo
-                                error_log("Erro ao excluir de $table: " . $e->getMessage());
+                                // Log do erro mas continua o processo
+                                error_log("Erro ao excluir dados de $table para usuário $user_id: " . $e->getMessage());
                         }
                         percentualInput.disabled = true;
                         percentualInput.style.opacity = '0.5';
