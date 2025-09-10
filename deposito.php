@@ -1,10 +1,12 @@
 <?php
-// Incluir rastreamento de afiliados
-require_once 'includes/affiliate_header.php';
-
+// Configurar sessão ANTES de qualquer include que possa iniciá-la
 $duracao = 60 * 60 * 24 * 30;
 session_set_cookie_params(['lifetime'=>$duracao,'path'=>'/','secure'=>false,'httponly'=>true,'samesite'=>'Lax']);
 ini_set('session.gc_maxlifetime',$duracao);
+
+// Agora incluir o header que pode iniciar a sessão
+require_once 'includes/affiliate_header.php';
+
 session_start();
 require 'db.php';
 $config = $pdo->query("SELECT min_deposito,max_deposito FROM configuracoes LIMIT 1")->fetch();
