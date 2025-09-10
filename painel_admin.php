@@ -20,16 +20,36 @@ try {
 // Buscar estatísticas gerais
 try {
     $total_usuarios = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
-    $usuarios_ativos = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE ativo = 1")->fetchColumn();
-    $total_depositos = $pdo->query("SELECT COALESCE(SUM(valor), 0) FROM transacoes_pix WHERE status = 'aprovado'")->fetchColumn();
-    $total_saques = $pdo->query("SELECT COALESCE(SUM(valor), 0) FROM saques WHERE status = 'aprovado'")->fetchColumn();
-    $jogadas_hoje = $pdo->query("SELECT COUNT(*) FROM historico_jogos WHERE DATE(data_jogo) = CURDATE()")->fetchColumn();
-    $receita_hoje = $pdo->query("SELECT COALESCE(SUM(valor_apostado - valor_premiado), 0) FROM historico_jogos WHERE DATE(data_jogo) = CURDATE()")->fetchColumn();
+    $usuarios_ativos = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE ativo = 1 AND conta_demo = 0")->fetchColumn();
+    $total_depositos = $pdo->query("
+        SELECT COALESCE(SUM(t.valor), 0) 
+        FROM transacoes_pix t 
+        JOIN usuarios u ON t.usuario_id = u.id 
+        WHERE t.status = 'aprovado' AND u.conta_demo = 0
+    ")->fetchColumn();
+    $total_saques = $pdo->query("
+        SELECT COALESCE(SUM(s.valor), 0) 
+        FROM saques s 
+        JOIN usuarios u ON s.usuario_id = u.id 
+        WHERE s.status = 'aprovado' AND u.conta_demo = 0
+    ")->fetchColumn();
+    $jogadas_hoje = $pdo->query("
+        SELECT COUNT(*) 
+        FROM historico_jogos h 
+        JOIN usuarios u ON h.usuario_id = u.id 
+        WHERE DATE(h.data_jogo) = CURDATE() AND u.conta_demo = 0
+    ")->fetchColumn();
+    $receita_hoje = $pdo->query("
+        SELECT COALESCE(SUM(h.valor_apostado - h.valor_premiado), 0) 
+        FROM historico_jogos h 
+        JOIN usuarios u ON h.usuario_id = u.id 
+        WHERE DATE(h.data_jogo) = CURDATE() AND u.conta_demo = 0
+    ")->fetchColumn();
     
     // Estatísticas de afiliados
-    $total_afiliados = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE codigo_afiliado IS NOT NULL AND codigo_afiliado != ''")->fetchColumn();
-    $afiliados_ativos = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE afiliado_ativo = 1")->fetchColumn();
-    $comissoes_pendentes = $pdo->query("SELECT COALESCE(SUM(comissao), 0) FROM usuarios WHERE afiliado_ativo = 1")->fetchColumn();
+    $total_afiliados = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE codigo_afiliado IS NOT NULL AND codigo_afiliado != '' AND conta_demo = 0")->fetchColumn();
+    $afiliados_ativos = $pdo->query("SELECT COUNT(*) FROM usuarios WHERE afiliado_ativo = 1 AND conta_demo = 0")->fetchColumn();
+    $comissoes_pendentes = $pdo->query("SELECT COALESCE(SUM(comissao), 0) FROM usuarios WHERE afiliado_ativo = 1 AND conta_demo = 0")->fetchColumn();
     
 } catch (PDOException $e) {
     $total_usuarios = $usuarios_ativos = $total_depositos = $total_saques = $jogadas_hoje = $receita_hoje = 0;
@@ -39,10 +59,11 @@ try {
 // Buscar últimas jogadas
 try {
     $ultimas_jogadas = $pdo->query("
-        SELECT h.*, u.nome, u.email, r.nome as raspadinha_nome 
+        SELECT h.*, u.nome, u.email, r.nome as raspadinha_nome, u.conta_demo
         FROM historico_jogos h 
         LEFT JOIN usuarios u ON h.usuario_id = u.id 
         LEFT JOIN raspadinhas_config r ON h.raspadinha_id = r.id 
+        WHERE u.conta_demo = 0
         ORDER BY h.data_jogo DESC 
         LIMIT 10
     ")->fetchAll();
@@ -54,11 +75,12 @@ try {
 try {
     $receita_7_dias = $pdo->query("
         SELECT 
-            DATE(data_jogo) as data,
-            COALESCE(SUM(valor_apostado - valor_premiado), 0) as receita
-        FROM historico_jogos 
-        WHERE data_jogo >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        GROUP BY DATE(data_jogo)
+            DATE(h.data_jogo) as data,
+            COALESCE(SUM(h.valor_apostado - h.valor_premiado), 0) as receita
+        FROM historico_jogos h
+        JOIN usuarios u ON h.usuario_id = u.id
+        WHERE h.data_jogo >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND u.conta_demo = 0
+        GROUP BY DATE(h.data_jogo)
         ORDER BY data ASC
     ")->fetchAll();
 } catch (PDOException $e) {
