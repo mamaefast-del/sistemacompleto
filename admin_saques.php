@@ -24,8 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $acao = $_POST['acao'];
     
     if ($acao === 'aprovar') {
-        $stmt = $pdo->prepare("UPDATE saques SET status = 'aprovado' WHERE id = ?");
-        if ($stmt->execute([$id])) {
+        // Buscar dados do saque
+        $stmt = $pdo->prepare("SELECT * FROM saques WHERE id = ?");
+        $stmt->execute([$id]);
+        $saque = $stmt->fetch();
+        
+        if ($saque && $saque['status'] === 'pendente') {
+            $stmt = $pdo->prepare("UPDATE saques SET status = 'aprovado', data_processamento = NOW() WHERE id = ?");
+            $stmt->execute([$id]);
             $mensagem = "Saque aprovado com sucesso!";
         }
     } elseif ($acao === 'recusar') {
@@ -36,14 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         
         if ($saque && $saque['status'] === 'pendente') {
             // Recusar saque
-            $stmt = $pdo->prepare("UPDATE saques SET status = 'recusado' WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE saques SET status = 'recusado', data_processamento = NOW() WHERE id = ?");
             $stmt->execute([$id]);
             
-            // Devolver saldo ao usuário
-            $stmt = $pdo->prepare("UPDATE usuarios SET saldo = saldo + ? WHERE id = ?");
-            $stmt->execute([$saque['valor'], $saque['usuario_id']]);
-            
-            $mensagem = "Saque recusado e valor devolvido ao usuário!";
+            // Devolver valor conforme o tipo de saque
+            if ($saque['tipo'] === 'comissao') {
+                // Devolver para comissão pendente
+                $stmt = $pdo->prepare("UPDATE usuarios SET comissao = comissao + ? WHERE id = ?");
+                $stmt->execute([$saque['valor'], $saque['usuario_id']]);
+                $mensagem = "Saque de comissão recusado e valor devolvido à comissão do afiliado!";
+            } else {
+                // Devolver para saldo normal
+                $stmt = $pdo->prepare("UPDATE usuarios SET saldo = saldo + ? WHERE id = ?");
+                $stmt->execute([$saque['valor'], $saque['usuario_id']]);
+                $mensagem = "Saque recusado e valor devolvido ao usuário!";
+            }
         }
     }
 }
@@ -52,7 +65,6 @@ $stmt = $pdo->query("
     SELECT saques.*, usuarios.email, usuarios.nome 
     FROM saques 
     JOIN usuarios ON usuarios.id = saques.usuario_id 
-    WHERE saques.tipo != 'comissao' OR saques.tipo IS NULL
     ORDER BY saques.data DESC
 ");
 
@@ -66,9 +78,10 @@ $stmt = $pdo->query("
         COUNT(CASE WHEN status = 'aprovado' THEN 1 END) as aprovados,
         COUNT(CASE WHEN status = 'recusado' THEN 1 END) as recusados,
         COALESCE(SUM(CASE WHEN status = 'aprovado' THEN valor ELSE 0 END), 0) as valor_aprovado,
-        COALESCE(SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END), 0) as valor_pendente
+        COALESCE(SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END), 0) as valor_pendente,
+        COUNT(CASE WHEN tipo = 'comissao' THEN 1 END) as saques_comissao,
+        COUNT(CASE WHEN tipo = 'saldo' OR tipo IS NULL THEN 1 END) as saques_saldo
     FROM saques 
-    WHERE tipo != 'comissao' OR tipo IS NULL
 ");
 $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
@@ -863,7 +876,7 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
         <!-- Tabela de Saques -->
         <div class="card">
             <h3>
-                <i class="fas fa-table"></i> Lista de Saques de Usuários
+                <i class="fas fa-table"></i> Lista de Todos os Saques
             </h3>
             
             <?php if (empty($saques)): ?>
@@ -878,6 +891,7 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
                             <tr>
                                 <th>ID</th>
                                 <th>Usuário</th>
+                                <th>Tipo</th>
                                 <th>Valor</th>
                                 <th>Chave Pix</th>
                                 <th>Data</th>
@@ -896,6 +910,17 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <div style="font-size: 11px; color: var(--text-muted);">
                                             <?= htmlspecialchars($saque['email']) ?>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <?php 
+                                        $tipo = $saque['tipo'] ?: 'saldo';
+                                        $cor = $tipo === 'comissao' ? 'var(--purple-color)' : 'var(--info-color)';
+                                        $icone = $tipo === 'comissao' ? 'percentage' : 'wallet';
+                                        ?>
+                                        <span style="color: <?= $cor ?>; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-<?= $icone ?>"></i>
+                                            <?= $tipo === 'comissao' ? 'Comissão' : 'Saldo' ?>
+                                        </span>
                                     </td>
                                     <td style="color: var(--primary-green); font-weight: 700;">
                                         R$ <?= number_format($saque['valor'], 2, ',', '.') ?>
@@ -918,14 +943,14 @@ $stats = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <?php if ($saque['status'] === 'pendente'): ?>
                                             <form action="" method="POST" style="display:inline;">
                                                 <input type="hidden" name="id" value="<?= $saque['id'] ?>">
-                                                <button type="submit" name="acao" value="aprovar" class="btn btn-success btn-sm" onclick="return confirm('Deseja aprovar este saque?')">
+                                                <button type="submit" name="acao" value="aprovar" class="btn btn-success btn-sm" onclick="return confirm('Deseja aprovar este saque de <?= $tipo === 'comissao' ? 'comissão' : 'saldo' ?>?')">
                                                     <i class="fas fa-check"></i>
                                                     Aprovar
                                                 </button>
                                             </form>
                                             <form action="" method="POST" style="display:inline;">
                                                 <input type="hidden" name="id" value="<?= $saque['id'] ?>">
-                                                <button type="submit" name="acao" value="recusar" class="btn btn-danger btn-sm" onclick="return confirm('Deseja recusar este saque? O valor será devolvido ao usuário.')">
+                                                <button type="submit" name="acao" value="recusar" class="btn btn-danger btn-sm" onclick="return confirm('Deseja recusar este saque? O valor será devolvido ao <?= $tipo === 'comissao' ? 'saldo de comissão' : 'saldo do usuário' ?>.')">
                                                     <i class="fas fa-times"></i>
                                                     Recusar
                                                 </button>
