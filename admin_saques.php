@@ -30,9 +30,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $saque = $stmt->fetch();
         
         if ($saque && $saque['status'] === 'pendente') {
-            $stmt = $pdo->prepare("UPDATE saques SET status = 'aprovado', data_processamento = NOW() WHERE id = ?");
-            $stmt->execute([$id]);
-            $mensagem = "Saque aprovado com sucesso!";
+            // Buscar gateway ExpfyPay ativo
+            $stmt = $pdo->prepare("SELECT client_id, client_secret, callback_url FROM gateways WHERE nome='expfypay' AND ativo=1 LIMIT 1");
+            $stmt->execute();
+            $gateway = $stmt->fetch();
+            
+            if (!$gateway) {
+                $mensagem = "❌ Gateway ExpfyPay não configurado ou inativo.";
+            } else {
+                $publicKey = $gateway['client_id'];
+                $secretKey = $gateway['client_secret'];
+                $callbackUrl = str_replace('/webhook-pix.php', '/webhook_saque.php', $gateway['callback_url']);
+                
+                // Detectar tipo de chave automaticamente
+                $tipo_chave = 'EMAIL'; // padrão
+                $chave_limpa = preg_replace('/\D/', '', $saque['chave_pix']);
+                
+                if (filter_var($saque['chave_pix'], FILTER_VALIDATE_EMAIL)) {
+                    $tipo_chave = 'EMAIL';
+                } elseif (strlen($chave_limpa) === 11) {
+                    $tipo_chave = 'CPF';
+                } elseif (strlen($chave_limpa) === 14) {
+                    $tipo_chave = 'CNPJ';
+                } elseif (strlen($chave_limpa) >= 10 && strlen($chave_limpa) <= 11) {
+                    $tipo_chave = 'PHONE';
+                } else {
+                    $tipo_chave = 'RANDOM';
+                }
+                
+                // Gerar external_id único para o saque
+                $external_id = 'SAQUE_' . $id . '_' . time();
+                
+                // Preparar payload para ExpfyPay
+                $payload = [
+                    'amount' => floatval($saque['valor']),
+                    'pix_key' => $saque['chave_pix'],
+                    'pix_key_type' => $tipo_chave,
+                    'external_id' => $external_id,
+                    'description' => "Saque aprovado - ID: {$id}",
+                    'callback_url' => $callbackUrl,
+                    'customer' => [
+                        'name' => $saque['nome'] ?: 'Usuário',
+                        'document' => $saque['taxId'] ?: '12345678901'
+                    ]
+                ];
+                
+                // Enviar para ExpfyPay
+                $ch = curl_init('https://pro.expfypay.com/api/v1/withdrawls');
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => json_encode($payload),
+                    CURLOPT_HTTPHEADER => [
+                        'X-Public-Key: ' . $publicKey,
+                        'X-Secret-Key: ' . $secretKey,
+                        'Content-Type: application/json'
+                    ],
+                    CURLOPT_TIMEOUT => 30
+                ]);
+                
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $error = curl_error($ch);
+                curl_close($ch);
+                
+                // Log da operação
+                file_put_contents('logs/saque_expfypay.log', 
+                    date('[Y-m-d H:i:s] ') . "Saque ID: $id - HTTP: $httpCode - Response: $response - Error: $error\n", 
+                    FILE_APPEND
+                );
+                
+                if ($error) {
+                    $mensagem = "❌ Erro de conexão com ExpfyPay: $error";
+                } else {
+                    $resposta = json_decode($response, true);
+                    
+                    if ($httpCode === 200 || $httpCode === 201) {
+                        // Sucesso - atualizar saque como aprovado
+                        $stmt = $pdo->prepare("UPDATE saques SET status = 'aprovado', external_id = ?, data_processamento = NOW() WHERE id = ?");
+                        $stmt->execute([$external_id, $id]);
+                        
+                        $mensagem = "✅ Saque aprovado e enviado via ExpfyPay! External ID: $external_id";
+                        
+                        // Log de sucesso
+                        $stmt = $pdo->prepare("INSERT INTO log_admin (acao, detalhes, data) VALUES (?, ?, NOW())");
+                        $stmt->execute(['Aprovar Saque', "Saque ID: $id aprovado via ExpfyPay - External ID: $external_id"]);
+                        
+                    } else {
+                        // Erro da API - devolver saldo
+                        $errorMsg = $resposta['message'] ?? 'Erro desconhecido da API';
+                        
+                        if ($saque['tipo'] === 'comissao') {
+                            $stmt = $pdo->prepare("UPDATE usuarios SET comissao = comissao + ? WHERE id = ?");
+                            $stmt->execute([$saque['valor'], $saque['usuario_id']]);
+                        } else {
+                            $stmt = $pdo->prepare("UPDATE usuarios SET saldo = saldo + ? WHERE id = ?");
+                            $stmt->execute([$saque['valor'], $saque['usuario_id']]);
+                        }
+                        
+                        $stmt = $pdo->prepare("UPDATE saques SET status = 'erro_api', data_processamento = NOW() WHERE id = ?");
+                        $stmt->execute([$id]);
+                        
+                        $mensagem = "❌ Erro ExpfyPay (HTTP $httpCode): $errorMsg - Valor devolvido ao usuário";
+                    }
+                }
+            }
         }
     } elseif ($acao === 'recusar') {
         // Buscar dados do saque para devolver o valor
