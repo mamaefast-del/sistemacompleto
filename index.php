@@ -32,6 +32,14 @@ if($usuarioLogado){
   $stmt=$pdo->prepare("SELECT nome, saldo FROM usuarios WHERE id=?");
   $stmt->execute([$_SESSION['usuario_id']]);
   $usuario=$stmt->fetch();
+  
+  // Verificar se o usuário foi encontrado
+  if (!$usuario) {
+    // Usuário não encontrado, fazer logout
+    session_destroy();
+    header('Location: index.php');
+    exit;
+  }
 }
 
 // Ganhadores fake para credibilidade
@@ -1551,7 +1559,7 @@ if(codigoConvite){localStorage.setItem('codigo_convite',codigoConvite);}
     </div>
     <div class="user-actions">
       <?php if($usuarioLogado):?>
-        <span class="saldo">R$ <?= number_format($usuario['saldo'],2,',','.') ?></span>
+        <span class="saldo">R$ <?= number_format($usuario['saldo'] ?? 0, 2, ',', '.') ?></span>
         <button class="btn btn-primary btn-depositar" onclick='window.location.href="deposito.php"'>
           <i class="fas fa-plus"></i> Recarregar
         </button>
