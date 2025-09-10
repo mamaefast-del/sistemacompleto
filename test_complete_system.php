@@ -61,7 +61,7 @@ try {
     $tables_afiliados = [
         'affiliate_clicks' => 'Rastreamento de cliques',
         'affiliate_config' => 'Configurações do sistema',
-        'affiliate_levels' => 'Níveis de afiliados',
+        'affiliate_attributions' => 'Atribuições de usuários',
         'marketing_materials' => 'Materiais de marketing',
         'historico_afiliados' => 'Histórico de ações',
         'comissoes' => 'Sistema de comissões'
@@ -86,8 +86,7 @@ try {
     echo "<h2>📊 Verificação de Views</h2>";
     
     $views = [
-        'view_afiliados_completo' => 'Relatório completo de afiliados',
-        'view_dashboard_afiliados' => 'Dashboard de estatísticas'
+        'view_affiliate_report' => 'Relatório completo de afiliados'
     ];
     
     echo "<table>";
@@ -208,16 +207,16 @@ try {
     echo "<h3>📱 Arquivos Principais:</h3>";
     echo "<ul>";
     echo "<li><code>admin_afiliados.php</code> - Painel administrativo de afiliados</li>";
-    echo "<li><code>painel_afiliado.php</code> - Dashboard do afiliado</li>";
+    echo "<li><code>afiliado.php</code> - Dashboard do afiliado</li>";
     echo "<li><code>webhook-pix.php</code> - Processamento automático de comissões</li>";
-    echo "<li><code>track_affiliate_click.php</code> - Rastreamento de cliques</li>";
+    echo "<li><code>includes/affiliate_tracker.php</code> - Rastreamento de cliques</li>";
     echo "</ul>";
     
     echo "<h3>💡 Dicas Importantes:</h3>";
     echo "<ul>";
     echo "<li>🔑 <strong>Login Admin:</strong> admin@gmail.com / senha: admin123</li>";
     echo "<li>🔗 <strong>Link de Afiliado Exemplo:</strong> /?codigo=AFIL001</li>";
-    echo "<li>📊 <strong>Usuário Afiliado:</strong> santzim (AFIL001) - 15% comissão</li>";
+    echo "<li>📊 <strong>Usuário Afiliado:</strong> afiliado@teste.com (AFIL001) - 15% comissão</li>";
     echo "<li>💰 <strong>Comissões:</strong> Nível 1: 10-15% | Nível 2: 5%</li>";
     echo "</ul>";
     echo "</div>";
