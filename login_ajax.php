@@ -30,13 +30,22 @@ try {
     $usuario = $stmt->fetch();
 
     if (!$usuario) {
-        echo 'E-mail ou senha incorretos';
+        // Verificar se o usuário existe mas está inativo
+        $stmt = $pdo->prepare("SELECT id, ativo FROM usuarios WHERE email = ?");
+        $stmt->execute([$email]);
+        $usuarioInativo = $stmt->fetch();
+        
+        if ($usuarioInativo && !$usuarioInativo['ativo']) {
+            echo 'Conta desativada. Entre em contato com o suporte';
+        } else {
+            echo 'Este usuário não existe. Verifique o e-mail digitado';
+        }
         exit;
     }
 
     // Verificar senha
     if (!password_verify($senha, $usuario['senha'])) {
-        echo 'E-mail ou senha incorretos';
+        echo 'Senha incorreta. Tente novamente';
         exit;
     }
 
