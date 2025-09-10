@@ -84,23 +84,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'pay_commission':
-                // Buscar comissão pendente
-                $stmt = $pdo->prepare("SELECT comissao FROM usuarios WHERE id = ?");
-                $stmt->execute([$user_id]);
-                $comissao_pendente = floatval($stmt->fetchColumn());
+                $commission_id = intval($_POST['commission_id'] ?? 0);
                 
-                if ($comissao_pendente > 0) {
-                    // Mover para saldo de comissão e zerar pendente
-                    $stmt = $pdo->prepare("UPDATE usuarios SET saldo_comissao = saldo_comissao + ?, comissao = 0 WHERE id = ?");
-                    $stmt->execute([$comissao_pendente, $user_id]);
+                // Buscar dados da comissão
+                $stmt = $pdo->prepare("SELECT * FROM comissoes WHERE id = ? AND status = 'pendente'");
+                $stmt->execute([$commission_id]);
+                $commission = $stmt->fetch();
+                
+                if ($commission) {
+                    // Buscar saldo atual do afiliado
+                    $stmt = $pdo->prepare("SELECT comissao, saldo_comissao FROM usuarios WHERE id = ?");
+                    $stmt->execute([$commission['afiliado_id']]);
+                    $saldos = $stmt->fetch();
                     
-                    // Atualizar status das comissões
-                    $stmt = $pdo->prepare("UPDATE comissoes SET status = 'pago', data_pagamento = NOW() WHERE afiliado_id = ? AND status = 'pendente'");
-                    $stmt->execute([$user_id]);
+                    $comissao_pendente = floatval($saldos['comissao'] ?? 0);
+                    $valor_comissao = floatval($commission['valor_comissao']);
                     
-                    $_SESSION['success'] = 'Comissão de R$ ' . number_format($comissao_pendente, 2, ',', '.') . ' paga com sucesso!';
+                    // Verificar se há saldo suficiente na comissão pendente
+                    if ($comissao_pendente >= $valor_comissao) {
+                        // Marcar comissão como paga
+                        $stmt = $pdo->prepare("UPDATE comissoes SET status = 'pago', data_pagamento = NOW() WHERE id = ?");
+                        $stmt->execute([$commission_id]);
+                        
+                        // Mover da comissão pendente para saldo de comissão (sem usar trigger)
+                        $stmt = $pdo->prepare("
+                            UPDATE usuarios 
+                            SET comissao = GREATEST(0, comissao - ?),
+                                saldo_comissao = saldo_comissao + ?
+                            WHERE id = ?
+                        ");
+                        $stmt->execute([$valor_comissao, $valor_comissao, $commission['afiliado_id']]);
+                        
+                        $_SESSION['success'] = 'Comissão paga com sucesso! R$ ' . number_format($valor_comissao, 2, ',', '.') . ' transferido para o saldo do afiliado.';
+                    } else {
+                        $_SESSION['error'] = 'Saldo de comissão insuficiente. Disponível: R$ ' . number_format($comissao_pendente, 2, ',', '.');
+                    }
                 } else {
-                    $_SESSION['error'] = 'Nenhuma comissão pendente para este afiliado.';
+                    $_SESSION['error'] = 'Comissão não encontrada ou já foi paga.';
                 }
                 break;
         }
