@@ -8,6 +8,9 @@ if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
 
 require 'db.php';
 
+// Configurar fuso horário para Brasília
+date_default_timezone_set('America/Sao_Paulo');
+
 // Buscar estatísticas para o header
 try {
     $pendentes_depositos = $pdo->query("SELECT COUNT(*) FROM transacoes_pix WHERE status = 'pendente'")->fetchColumn();
@@ -27,23 +30,33 @@ try {
         JOIN usuarios u ON t.usuario_id = u.id 
         WHERE t.status = 'aprovado' AND u.conta_demo = 0
     ")->fetchColumn();
-    $total_saques = $pdo->query("
+    
+    // Separar saques por tipo
+    $total_saques_jogadores = $pdo->query("
         SELECT COALESCE(SUM(s.valor), 0) 
         FROM saques s 
         JOIN usuarios u ON s.usuario_id = u.id 
-        WHERE s.status = 'aprovado' AND u.conta_demo = 0
+        WHERE s.status = 'aprovado' AND u.conta_demo = 0 AND (s.tipo = 'saldo' OR s.tipo IS NULL)
     ")->fetchColumn();
+    
+    $total_saques_afiliados = $pdo->query("
+        SELECT COALESCE(SUM(s.valor), 0) 
+        FROM saques s 
+        JOIN usuarios u ON s.usuario_id = u.id 
+        WHERE s.status = 'aprovado' AND u.conta_demo = 0 AND s.tipo = 'comissao'
+    ")->fetchColumn();
+    
     $jogadas_hoje = $pdo->query("
         SELECT COUNT(*) 
         FROM historico_jogos h 
         JOIN usuarios u ON h.usuario_id = u.id 
-        WHERE DATE(h.data_jogo) = CURDATE() AND u.conta_demo = 0
+        WHERE DATE(CONVERT_TZ(h.data_jogo, '+00:00', '-03:00')) = CURDATE() AND u.conta_demo = 0
     ")->fetchColumn();
     $receita_hoje = $pdo->query("
         SELECT COALESCE(SUM(h.valor_apostado - h.valor_premiado), 0) 
         FROM historico_jogos h 
         JOIN usuarios u ON h.usuario_id = u.id 
-        WHERE DATE(h.data_jogo) = CURDATE() AND u.conta_demo = 0
+        WHERE DATE(CONVERT_TZ(h.data_jogo, '+00:00', '-03:00')) = CURDATE() AND u.conta_demo = 0
     ")->fetchColumn();
     
     // Estatísticas de afiliados
@@ -52,7 +65,7 @@ try {
     $comissoes_pendentes = $pdo->query("SELECT COALESCE(SUM(comissao), 0) FROM usuarios WHERE afiliado_ativo = 1 AND conta_demo = 0")->fetchColumn();
     
 } catch (PDOException $e) {
-    $total_usuarios = $usuarios_ativos = $total_depositos = $total_saques = $jogadas_hoje = $receita_hoje = 0;
+    $total_usuarios = $usuarios_ativos = $total_depositos = $total_saques_jogadores = $total_saques_afiliados = $jogadas_hoje = $receita_hoje = 0;
     $total_afiliados = $afiliados_ativos = $comissoes_pendentes = 0;
 }
 
@@ -75,12 +88,12 @@ try {
 try {
     $receita_7_dias = $pdo->query("
         SELECT 
-            DATE(h.data_jogo) as data,
+            DATE(CONVERT_TZ(h.data_jogo, '+00:00', '-03:00')) as data,
             COALESCE(SUM(h.valor_apostado - h.valor_premiado), 0) as receita
         FROM historico_jogos h
         JOIN usuarios u ON h.usuario_id = u.id
-        WHERE h.data_jogo >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND u.conta_demo = 0
-        GROUP BY DATE(h.data_jogo)
+        WHERE CONVERT_TZ(h.data_jogo, '+00:00', '-03:00') >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND u.conta_demo = 0
+        GROUP BY DATE(CONVERT_TZ(h.data_jogo, '+00:00', '-03:00'))
         ORDER BY data ASC
     ")->fetchAll();
 } catch (PDOException $e) {
@@ -925,15 +938,29 @@ try {
 
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-title">Total Sacado</div>
+                    <div class="stat-title">Saques Jogadores</div>
                     <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
                         <i class="fas fa-arrow-up"></i>
                     </div>
                 </div>
-                <div class="stat-value">R$ <?= number_format($total_saques, 0, ',', '.') ?></div>
+                <div class="stat-value">R$ <?= number_format($total_saques_jogadores, 0, ',', '.') ?></div>
                 <div class="stat-change">
                     <i class="fas fa-minus"></i>
-                    <span>Pagamentos</span>
+                    <span>Saldo normal</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Saques Afiliados</div>
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--purple-color);">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+                <div class="stat-value">R$ <?= number_format($total_saques_afiliados, 0, ',', '.') ?></div>
+                <div class="stat-change">
+                    <i class="fas fa-handshake"></i>
+                    <span>Comissões</span>
                 </div>
             </div>
 
