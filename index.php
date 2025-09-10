@@ -10,6 +10,12 @@ require_once 'includes/affiliate_header.php';
 
 session_start();
 require 'db.php';
+
+// Processar rastreamento de afiliado pendente (se houver)
+if (function_exists('processPendingAffiliateTracking')) {
+    processPendingAffiliateTracking($pdo);
+}
+
 $usuarioLogado=false;$usuario=null;
 if(isset($_SESSION['usuario_id'])){
   $usuarioLogado=true;

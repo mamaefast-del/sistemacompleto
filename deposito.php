@@ -9,6 +9,12 @@ require_once 'includes/affiliate_header.php';
 
 session_start();
 require 'db.php';
+
+// Processar rastreamento de afiliado pendente (se houver)
+if (function_exists('processPendingAffiliateTracking')) {
+    processPendingAffiliateTracking($pdo);
+}
+
 $config = $pdo->query("SELECT min_deposito,max_deposito FROM configuracoes LIMIT 1")->fetch();
 $min = floatval($config['min_deposito']);
 $max = floatval($config['max_deposito']);
