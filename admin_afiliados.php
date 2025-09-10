@@ -1324,11 +1324,11 @@ try {
                                id="editCommissionRate" 
                                class="form-input" 
                                step="0.1" 
-                               max="100" 
+                               max="50"
                                max="50"
                                required>
                         <small style="color: var(--text-muted); font-size: 11px;">
-                            Digite a nova taxa de comissão (0% a 100%)
+                            Digite a nova taxa de comissão (0% a 50%)
                         </small>
                     </div>
                     
