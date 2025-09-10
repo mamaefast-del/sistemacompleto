@@ -2013,31 +2013,142 @@ function atualizarGanhadores() {
 $(function(){
   $('#loginForm').submit(function(e){
     e.preventDefault();
+    
+    // Limpar mensagem anterior
+    const msgDiv = $('#auth-msg');
+    msgDiv.removeClass('success').hide().text('');
+    
+    // Mostrar loading no botão
+    const btn = $(this).find('button[type="submit"]');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Entrando...').prop('disabled', true);
+    
     $.ajax({
       url:'login_ajax.php',
       type:'POST',
       data:$(this).serialize(),
       success:function(r){
-        if(r.trim()==='success'){
+        const response = r.trim();
+        if(response === 'success'){
           location.reload();
         }else{
-          $('#auth-msg').text(r);
+          // Mostrar mensagem de erro
+          msgDiv.text(response).removeClass('success').show();
+          
+          // Restaurar botão
+          btn.html(originalText).prop('disabled', false);
+          
+          // Focar no campo apropriado baseado no erro
+          if(response.includes('usuário não existe') || response.includes('E-mail inválido')) {
+            $('input[name="email"]').focus().select();
+          } else if(response.includes('Senha incorreta')) {
+            $('input[name="senha"]').focus().select();
+          }
         }
       },
       error:function(){
-        $('#auth-msg').text('Erro ao processar requisição. Tente novamente.');
+        msgDiv.text('Erro de conexão. Tente novamente.').removeClass('success').show();
+        btn.html(originalText).prop('disabled', false);
       }
     });
   });
   
   $('#registerForm').submit(function(e){
     e.preventDefault();
+    
+    // Limpar mensagem anterior
+    const msgDiv = $('#auth-msg');
+    msgDiv.removeClass('success').hide().text('');
+    
+    // Mostrar loading no botão
+    const btn = $(this).find('button[type="submit"]');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Criando conta...').prop('disabled', true);
+    
     $.ajax({
       url:'register_ajax.php',
       method:'POST',
       data:$(this).serialize(),
       success:function(r){
-        if(r.trim()==='success'){
+        const response = r.trim();
+        if(response === 'success'){
+          // Mostrar sucesso antes de redirecionar
+          msgDiv.text('Conta criada com sucesso! Redirecionando...').addClass('success').show();
+          setTimeout(() => {
+            window.location.href='deposito';
+          }, 1500);
+        } else {
+          // Mostrar mensagem de erro
+          msgDiv.text(response).removeClass('success').show();
+          
+          // Restaurar botão
+          btn.html(originalText).prop('disabled', false);
+          
+          // Focar no campo apropriado baseado no erro
+          if(response.includes('E-mail já cadastrado') || response.includes('E-mail inválido')) {
+            $('input[name="email"]').focus().select();
+          } else if(response.includes('senha')) {
+            $('input[name="senha"]').focus().select();
+          } else if(response.includes('Nome')) {
+            $('input[name="nome"]').focus().select();
+          }
+        }
+      },
+      error:function(){
+        msgDiv.text('Erro de conexão. Tente novamente.').removeClass('success').show();
+        btn.html(originalText).prop('disabled', false);
+      }
+    });
+  });
+  
+  // Limpar mensagem quando começar a digitar
+  $('#loginForm input, #registerForm input').on('input', function() {
+    $('#auth-msg').hide();
+  });
+  
+  // Melhorar feedback visual dos inputs
+  $('.input-group input').on('focus', function() {
+    $(this).closest('.input-group').addClass('focused');
+  }).on('blur', function() {
+    $(this).closest('.input-group').removeClass('focused');
+  });
+});
+
+// Função para mostrar/ocultar senha
+function togglePassword(button) {
+  const input = $(button).siblings('input[type="password"], input[type="text"]');
+  const icon = $(button).find('i');
+  
+  if (input.attr('type') === 'password') {
+    input.attr('type', 'text');
+    icon.removeClass('fa-eye').addClass('fa-eye-slash');
+  } else {
+    input.attr('type', 'password');
+    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+  }
+}
+
+// Função para atualizar força da senha
+function updatePasswordStrength(password) {
+  const strengthBars = $('.strength-bar');
+  const length = password.length;
+  
+  // Reset
+  strengthBars.removeClass('active');
+  
+  if (length >= 6) {
+    strengthBars.eq(0).addClass('active');
+  }
+  if (length >= 8) {
+    strengthBars.eq(1).addClass('active');
+  }
+  if (length >= 10 && /[A-Z]/.test(password)) {
+    strengthBars.eq(2).addClass('active');
+  }
+  if (length >= 12 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+    strengthBars.eq(3).addClass('active');
+  }
+}</script>
           window.location.href='deposito';
         }else{
           $('#auth-msg').text(r);
