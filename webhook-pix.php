@@ -1,6 +1,6 @@
 <?php
 require 'db.php';
-require 'processar_comissao.php';
+require_once 'includes/affiliate_tracker.php';
 
 // Log de entrada
 $input = file_get_contents('php://input');
@@ -48,6 +48,16 @@ if ($status === 'completed') {
             $stmt = $pdo->prepare("UPDATE usuarios SET saldo = saldo + ? WHERE id = ?");
             $stmt->execute([$valor_total, $transacao['usuario_id']]);
             
+            // Processar comissão de afiliado (primeiro depósito)
+            try {
+                $affiliateProcessed = processAffiliateFirstDeposit($pdo, $transacao['usuario_id'], $transaction_id, $amount);
+                if ($affiliateProcessed) {
+                    file_put_contents('webhook_log.txt', date('[Y-m-d H:i:s] ') . "Comissão de afiliado processada para usuário {$transacao['usuario_id']}\n", FILE_APPEND);
+                }
+            } catch (Exception $e) {
+                file_put_contents('webhook_log.txt', date('[Y-m-d H:i:s] ') . "Erro ao processar comissão de afiliado: " . $e->getMessage() . "\n", FILE_APPEND);
+            }
+            
             // Criar rollover se houver bônus
             if ($bonus > 0) {
                 $valor_rollover = $valor_total * $rollover_multiplicador;
@@ -57,9 +67,6 @@ if ($status === 'completed') {
                 ");
                 $stmt->execute([$transacao['usuario_id'], $valor_total, $valor_rollover]);
             }
-            
-            // Processar comissão de afiliado
-            processarComissaoAfiliado($transacao['usuario_id'], $amount, $pdo);
             
             file_put_contents('webhook_log.txt', date('[Y-m-d H:i:s] ') . "Transação aprovada: $external_id - Valor: $amount - Bônus: $bonus\n", FILE_APPEND);
         }

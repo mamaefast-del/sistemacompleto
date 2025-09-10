@@ -1,4 +1,7 @@
 <?php
+// Incluir rastreamento de afiliados
+require_once 'includes/affiliate_header.php';
+
 session_start();
 require 'db.php';
 

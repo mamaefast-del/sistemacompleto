@@ -85,6 +85,18 @@ try {
     // Regenerar ID da sessão para segurança
     session_regenerate_id(true);
     
+    // Processar atribuição de afiliado
+    try {
+        require_once 'includes/affiliate_tracker.php';
+        $affiliateAttributed = attributeUserToAffiliate($pdo, $usuarioId);
+        if ($affiliateAttributed) {
+            error_log("Usuário $usuarioId atribuído a afiliado com sucesso");
+        }
+    } catch (Exception $e) {
+        error_log("Erro ao processar atribuição de afiliado: " . $e->getMessage());
+        // Não falhar o cadastro por erro de afiliado
+    }
+    
     echo 'success';
     
 } catch (PDOException $e) {

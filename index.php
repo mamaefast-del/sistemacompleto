@@ -1,4 +1,7 @@
 <?php
+// Incluir rastreamento de afiliados
+require_once 'includes/affiliate_header.php';
+
 $duracao = 60 * 60 * 24 * 30;
 session_set_cookie_params(['lifetime'=>$duracao,'path'=>'/','secure'=>false,'httponly'=>true,'samesite'=>'Lax']);
 ini_set('session.gc_maxlifetime',$duracao);
