@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $new_rate = floatval($_POST['commission_rate'] ?? 10);
                 
                 // Validar limite da taxa
-                if ($new_rate < 0 || $new_rate > 50) {
-                    $_SESSION['error'] = 'Taxa de comissão deve estar entre 0% e 50%';
+                if ($new_rate < 0 || $new_rate > 100) {
+                    $_SESSION['error'] = 'Taxa de comissão deve estar entre 0% e 100%';
                     break;
                 }
                 
