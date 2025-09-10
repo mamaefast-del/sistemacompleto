@@ -99,6 +99,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 break;
+                
+            case 'make_affiliate':
+                // Verificar se já é afiliado
+                $stmt = $pdo->prepare("SELECT codigo_afiliado FROM usuarios WHERE id = ?");
+                $stmt->execute([$user_id]);
+                $current_code = $stmt->fetchColumn();
+                
+                if (empty($current_code)) {
+                    // Gerar código único
+                    do {
+                        $codigo = strtoupper(substr(md5(uniqid() . $user_id . time()), 0, 8));
+                        $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE codigo_afiliado = ?");
+                        $stmt->execute([$codigo]);
+                    } while ($stmt->fetch());
+                    
+                    $stmt = $pdo->prepare("UPDATE usuarios SET codigo_afiliado = ?, afiliado_ativo = 1, porcentagem_afiliado = 10.00 WHERE id = ?");
+                    $stmt->execute([$codigo, $user_id]);
+                    
+                    // Registrar no histórico (se a tabela existir)
+                    try {
+                        // Verificar se a tabela historico_afiliados existe
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'historico_afiliados'");
+                        $stmt->execute();
+                        $table_exists = $stmt->fetchColumn() > 0;
+                        
+                        if ($table_exists) {
+                            $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'ativacao', ?)");
+                            $stmt->execute([$user_id, "Transformado em afiliado pelo admin - Código: $codigo"]);
+                        }
+                    } catch (PDOException $e) {
+                        error_log("Erro ao registrar histórico de afiliado: " . $e->getMessage());
+                    }
+                    
+                    $_SESSION['success'] = 'Usuário transformado em afiliado! Código: ' . $codigo;
+                } else {
+                    $_SESSION['error'] = 'Usuário já é afiliado!';
+                }
+                break;
+                
+            case 'remove_affiliate':
+                $stmt = $pdo->prepare("UPDATE usuarios SET afiliado_ativo = 0 WHERE id = ?");
+                $stmt->execute([$user_id]);
+                
+                // Registrar no histórico (se a tabela existir)
+                try {
+                    // Verificar se a tabela historico_afiliados existe
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'historico_afiliados'");
+                    $stmt->execute();
+                    $table_exists = $stmt->fetchColumn() > 0;
+                    
+                    if ($table_exists) {
+                        $stmt = $pdo->prepare("INSERT INTO historico_afiliados (afiliado_id, acao, detalhes) VALUES (?, 'desativacao', 'Status de afiliado removido pelo admin')");
+                        $stmt->execute([$user_id]);
+                    }
+                } catch (PDOException $e) {
+                    error_log("Erro ao registrar histórico de afiliado: " . $e->getMessage());
+                }
+                
+                $_SESSION['success'] = 'Status de afiliado removido!';
+                break;
         }
     }
 }
